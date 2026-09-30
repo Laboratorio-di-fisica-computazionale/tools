@@ -19,6 +19,10 @@ if (( EUID == 0 )); then
     printf 'Esegui come utente del laboratorio, senza sudo.\n' >&2
     exit 1
 fi
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
 for programma in gh git; do
     command -v "$programma" >/dev/null || {
         printf 'Manca %s: pulizia non eseguita.\n' "$programma" >&2

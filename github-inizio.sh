@@ -14,12 +14,17 @@ if (( EUID == 0 )); then
     printf 'Esegui come utente del laboratorio, senza sudo.\n' >&2
     exit 1
 fi
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
 for programma in gh git; do
     command -v "$programma" >/dev/null || {
-        printf 'Manca %s. Chiedi di installare git e gh.\n' "$programma" >&2
+        printf 'Manca %s. Esegui prima install.sh (oppure installa-gh.sh per gh).\n' "$programma" >&2
         exit 1
     }
 done
+gh --version >/dev/null
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 fine="$script_dir/github-fine.sh"
