@@ -1,42 +1,28 @@
 # Tools — Laboratorio di fisica computazionale
 
-## Installazione rapida
+## Installazione
 
-Dal terminale della macchina su cui lavorerai, come normale utente Linux:
+Dal terminale della macchina su cui lavorerai copia, incolla ed esegui questo comando in una shell:
 
 ```bash
 lab_installer=$(curl -fsSL https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh) && /bin/bash -c "$lab_installer"
 ```
 
-Il download deve riuscire prima dell'esecuzione. Non usare `sudo` o `su`: i file devono essere installati nella home dell'utente del laboratorio. Puoi leggere prima [install.sh](install.sh).
-
-L'installer:
+Questo installer:
 
 1. Crea `~/.local/bin`, se manca.
 2. Scarica `installa-gh.sh`, `github-inizio.sh` e `github-fine.sh` con `curl`.
 3. Verifica tutti i download e la sintassi Bash prima di installare i tre file con permessi `755`.
-4. Esegue `installa-gh.sh`, che riusa un `gh` funzionante oppure scarica il pacchetto Debian e ne copia l'eseguibile in `~/.local/bin/gh`.
+4. Esegue `installa-gh.sh`, che controlla se `gh` e' installato, altrimenti scarica il pacchetto Debian e ne copia l'eseguibile in `~/.local/bin/gh`.
 5. Configura `~/.bashrc` per includere `~/.local/bin` nel `PATH`, se non è già presente in una comune assegnazione di `PATH`.
 
-**L'installazione non esegue il login e non cambia le credenziali GitHub.**
-
-Dopo l'installazione, aggiorna anche il terminale corrente:
+Dopo l'installazione aggiungi la directory `~/.local/bin` al `PATH`, ovvero l'elenco delle directory in cui Bash cerca i comando:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
-
-Le nuove sessioni interattive Bash leggeranno `.bashrc`. Uno script eseguito come processo separato non può modificare il `PATH` della shell che lo ha avviato. Puoi comunque usare subito i percorsi completi `~/.local/bin/github-inizio.sh` e `~/.local/bin/github-fine.sh`.
-
-### Requisiti
-
-- Bash, Git e `curl`.
-- Per scaricare `gh` se manca: `apt-get`, `dpkg-deb` e i normali strumenti Debian (`mktemp`, `install`, `mv`, ecc.).
-- Repository APT configurati, indici utilizzabili e accesso alla rete per download e login.
-
-`apt-get download` scarica il pacchetto senza installarlo nel sistema; `dpkg-deb -x` lo estrae temporaneamente. Non vengono eseguiti `apt update`, installazione di dipendenze o modifiche al database dei pacchetti. Il binario viene provato prima di copiarlo. Su Debian 12 `gh` 2.23.0 dispone dei comandi necessari.
-
-Un `gh` già funzionante viene riutilizzato, senza aggiornarlo automaticamente.
+Oppure apri una nuova finestra del terminale.
+Le nuove sessioni interattive Bash leggeranno `.bashrc`. 
 
 ## I quattro file
 
@@ -47,11 +33,8 @@ Un `gh` già funzionante viene riutilizzato, senza aggiornarlo automaticamente.
 | `github-inizio.sh` | Inizio di ogni sessione | Pulisce l'accesso precedente, avvia il login HTTPS e verifica l'account. |
 | `github-fine.sh` | Fine di ogni sessione | Rimuove l'autenticazione locale di `gh` e richiede la pulizia delle credenziali Git HTTPS. |
 
-I tre strumenti vengono copiati in `~/.local/bin`; `install.sh` rimane il punto di ingresso nel repository. I due script di sessione includono autonomamente `~/.local/bin` nel proprio `PATH` e trovano `gh` anche senza riaprire il terminale. Mantenerli nella stessa directory, con i nomi originali.
 
-Il controllo di `.bashrc` riconosce le forme comuni `$HOME/.local/bin`, `${HOME}/.local/bin`, `~/.local/bin` e il percorso assoluto nelle assegnazioni di `PATH`, ignorando i commenti. Non esegue `.bashrc`. Il blocco eventualmente aggiunto verifica che la directory esista e non duplica la voce nel `PATH`. Configurazioni indirette o personalizzate di Bash possono richiedere un controllo manuale.
-
-## Guida per gli studenti
+## Guida per gli studenti per ottenere le credenziali GitHub e cancellarle alla fine dell'esercitazione
 
 ### 1. Inizio della sessione
 
@@ -63,16 +46,58 @@ Se il comando non viene ancora trovato, usa `~/.local/bin/github-inizio.sh`.
 
 Lo script chiama **sempre** `github-fine.sh` prima del login, anche per rimuovere credenziali precedenti scadute. Se la pulizia fallisce, si ferma.
 
-1. Inserisci il tuo username GitHub, non l'email né il nome dell'utente Linux.
-2. Apri l'indirizzo mostrato da `gh` e inserisci il codice temporaneo.
-3. Controlla che il browser stia usando il tuo account e autorizza GitHub CLI. Se viene chiesto di autenticare anche Git, rispondi `Yes`.
-4. Attendi `Accesso GitHub pronto per ...` e verifica il nome.
+Il terminale e il browser hanno ruoli diversi: **lascia aperto il terminale per tutta la procedura** e passa da una finestra all'altra quando serve.
 
-Se il browser autorizza un account diverso dallo username inserito, lo script rifiuta l'accesso e tenta la pulizia. Esci dall'account errato nel browser e riprova.
+1. **Nel terminale**, inserisci il tuo username GitHub, non l'email né il nome dell'utente Linux. Se viene chiesto di autenticare anche Git, rispondi `Yes`.
+2. **Prendi il codice dal terminale.** Prima di aprire il browser, `gh` mostra una riga simile a questa:
 
-**Da una VM via SSH:** apri l'indirizzo nel browser del tuo computer o telefono e inserisci il codice del terminale remoto. Non serve un browser grafico sulla VM. Se il comando termina con un errore, riesegui lo script e usa il nuovo codice.
+   ```text
+   First copy your one-time code: XXXX-XXXX
+   ```
+
+   Copia o annota il codice effettivamente mostrato, poi premi Invio se richiesto per aprire il browser. `XXXX-XXXX` è solo un esempio del formato, non un codice da usare.
+3. **Nel browser, accedi al tuo account GitHub.** Se non sei già autenticato, inserisci le tue credenziali. **Quando GitHub chiede il codice di autenticazione a due fattori (2FA), devi inserire anche quello:** prendilo dall'app di autenticazione configurata per il tuo account, oppure dal metodo che hai impostato, per esempio SMS. Se usi una passkey o una chiave di sicurezza, segui la relativa richiesta. Se la sessione del browser è già autenticata, questo passaggio potrebbe non comparire.
+4. **Nella pagina “Device Activation” / “Authorize your device”**, inserisci il codice `XXXX-XXXX` che hai preso **dal terminale** e premi **Continue**. Controlla che “Signed in as” mostri il tuo username.
+5. Conferma l'autorizzazione a **GitHub CLI**, seguendo il pulsante mostrato nella pagina.
+6. **Torna al terminale** e attendi `Accesso GitHub pronto per ...`. Verifica il nome prima di iniziare a lavorare.
+
+I due codici non sono intercambiabili:
+
+| Codice richiesto | Dove prenderlo | Dove inserirlo |
+| --- | --- | --- |
+| Codice di autenticazione a due fattori (2FA), se richiesto | Dall'app di autenticazione o dal metodo configurato per il tuo account | Nella schermata di accesso a GitHub che richiede il codice di autenticazione |
+| Codice di autorizzazione del dispositivo, nel formato `XXXX-XXXX` | Dal terminale in cui hai avviato `github-inizio.sh` | Nella pagina “Device Activation” / “Authorize your device” |
+
+**Se il browser copre il terminale:** usa `Alt+Tab` oppure clicca la finestra del terminale nella barra in basso (per esempio `studente@labcalc: ~`). Cerca la riga `First copy your one-time code`, copia il codice e torna al browser. Non chiudere il terminale e non avviare una seconda procedura mentre la prima è in attesa.
+
+**Se il codice del dispositivo è scaduto o la procedura è fallita:** torna al terminale, interrompi l'eventuale attesa con `Ctrl+C` e riesegui `github-inizio.sh`. Usa il nuovo codice mostrato; quello precedente non va riutilizzato.
+
+**Se il browser usa l'account di un altro studente:** esci da quell'account e accedi con il tuo prima di autorizzare. Lo script verifica lo username inserito e, se non corrisponde, rifiuta l'accesso e tenta la pulizia.
+
+**Da una VM via SSH:** apri l'indirizzo mostrato da `gh` nel browser del tuo computer o telefono e inserisci il codice del terminale remoto. Non serve un browser grafico sulla VM. L'eventuale codice 2FA resta quello del tuo account GitHub.
 
 Esegui gli script normalmente: non usare `source` o `sudo`.
+
+
+#### Alternative al codice dell'app di autenticazione
+
+Se GitHub richiede la verifica a due fattori, devi completarla con uno dei metodi configurati sul tuo account. Non è necessario usare sempre un codice TOTP.
+
+| Metodo | Cosa fai nel browser |
+| --- | --- |
+| App di autenticazione (TOTP) | Inserisci il codice temporaneo generato dall'app configurata per GitHub. |
+| Passkey | Confermi con il dispositivo personale, il PIN o la biometria. La passkey soddisfa password e secondo fattore in un unico accesso. |
+| Chiave di sicurezza registrata come secondo fattore | Dopo la password, colleghi o attivi la chiave seguendo la richiesta del browser. Una chiave configurata come passkey può invece consentire l'accesso senza password. |
+| GitHub Mobile | Approvi la richiesta nell'app; potrebbe essere richiesto di confermare un numero mostrato nel browser. |
+| SMS, se disponibile e consentito | Inserisci il codice ricevuto al numero configurato sul tuo account. |
+
+Nella documentazione attuale GitHub richiede di configurare prima TOTP o SMS per abilitare la 2FA, poi permette di aggiungere passkey, chiavi di sicurezza e GitHub Mobile. Una passkey già registrata può evitare di digitare password e codice a ogni accesso: non elimina la protezione del secondo fattore.
+
+Se GitHub o l'organizzazione richiedono la 2FA, la sola password non basta. **Un codice ricevuto via email per verificare un dispositivo non equivale alla 2FA.** Anche il codice `XXXX-XXXX` prodotto da `gh` serve ad autorizzare il dispositivo e non sostituisce il secondo fattore dell'account.
+
+Per il laboratorio puoi completare l'accesso e l'autorizzazione di `gh` nel browser del tuo telefono o computer personale, usando il metodo già configurato. Non occorre creare una passkey sulla macchina condivisa. Se non usi uno smartphone, esistono anche applicazioni TOTP per computer personale; evita di conservare il segreto TOTP nell'account Linux condiviso.
+
+Riferimenti ufficiali: [accesso con 2FA](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/accessing-github-using-two-factor-authentication), [configurazione dei metodi](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication), [passkey](https://docs.github.com/en/authentication/authenticating-with-a-passkey/about-passkeys) e [2FA obbligatoria](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/about-mandatory-two-factor-authentication).
 
 ### 2. Il proprio repository
 
@@ -120,58 +145,6 @@ Esci anche da GitHub e Classroom 50 nei browser del computer condiviso, oppure c
 
 **Chiudere il terminale o la connessione SSH non esegue automaticamente il logout GitHub.**
 
-## Istruzioni per gli amministratori
-
-### Preparare i requisiti
-
-Se mancano Git o `curl`, installarli una volta sulla macchina o nell'immagine della VM:
-
-```bash
-sudo apt update
-sudo apt install git curl ca-certificates
-```
-
-In una shell già root, omettere `sudo`. Non è necessario concedere privilegi amministrativi agli studenti.
-
-Eseguire poi l'installer in una normale sessione dell'utente che lavorerà in laboratorio, per esempio `studente`. L'installazione vale per quella home: su macchine o home distinte va ripetuta. Il login di collaudo va eseguito fuori dalle lezioni perché rimuove l'accesso precedente.
-
-### Installazione da una copia del repository
-
-In alternativa al comando rapido:
-
-```bash
-git clone https://github.com/Laboratorio-di-fisica-computazionale/tools.git
-cd tools
-mkdir -p "$HOME/.local/bin"
-install -m 0755 installa-gh.sh github-inizio.sh github-fine.sh "$HOME/.local/bin/"
-bash "$HOME/.local/bin/installa-gh.sh"
-```
-
-Questo metodo permette anche di provare i file di un branch prima della pubblicazione su `main`.
-
-### Permessi e verifiche
-
-I file nella home appartengono all'utente che esegue l'installer e hanno permessi **`0755` (`rwxr-xr-x`)**. Non usare `777`. Chi usa lo stesso account Linux può modificarli: per proteggerli dalle modifiche degli studenti serve un'installazione di sistema gestita separatamente dall'amministratore.
-
-Verificare nella sessione dell'utente:
-
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-command -v gh
-gh --version
-command -v github-inizio.sh
-command -v github-fine.sh
-ls -l ~/.local/bin/installa-gh.sh ~/.local/bin/github-inizio.sh ~/.local/bin/github-fine.sh
-```
-
-Se esistono vecchie copie in `/usr/local/bin`, verificare con `type -a github-inizio.sh github-fine.sh` quale versione viene eseguita. Mettere `~/.local/bin` prima delle altre directory nel `PATH`, oppure usare il percorso completo.
-
-## Aggiornamento
-
-Ripetere il comando di installazione rapida aggiorna i tre script da `main`, senza avviare il login. Un `gh` funzionante viene mantenuto. La copia di `gh` nella home non è gestita da `apt upgrade`.
-
-Per una distribuzione fissata, scaricare `install.sh` da un tag o commit e avviarlo con `LAB_TOOLS_REF` impostato allo stesso riferimento, per esempio `LAB_TOOLS_REF=SHA_DEL_COMMIT bash install.sh`. Il riferimento deve essere un tag senza slash oppure uno SHA. Aggiornare fuori dalle sessioni di laboratorio.
-
 ## Problemi comuni e limiti
 
 - **Download APT fallito:** verificare la rete. Se gli indici sono assenti o obsoleti, chiedere all'amministratore di eseguire `apt update`.
@@ -201,4 +174,3 @@ Test automatici con download e comandi GitHub simulati, senza account reali:
 python3 -m unittest discover -s tests -v
 ```
 
-Il login effettivo e il push vanno collaudati su una macchina del laboratorio prima della distribuzione agli studenti.
