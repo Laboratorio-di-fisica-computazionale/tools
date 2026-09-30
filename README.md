@@ -9,8 +9,7 @@ Ogni studente usa il proprio account GitHub. Il login autorizza un **token di ac
 Dal terminale della macchina su cui lavorerai, come normale utente Linux:
 
 ```bash
-lab_installer=$(curl -fsSL https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh) &&
-  /bin/bash -c "$lab_installer"
+lab_installer=$(curl -fsSL https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh) && /bin/bash -c "$lab_installer"
 ```
 
 Il download deve riuscire prima dell'esecuzione. Non usare `sudo` o `su`: i file devono essere installati nella home dell'utente del laboratorio. Puoi leggere prima [install.sh](install.sh).
