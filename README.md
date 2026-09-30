@@ -1,10 +1,6 @@
 # Tools — Laboratorio di fisica computazionale
 
-Strumenti per usare GitHub sui PC e sulle VM del laboratorio, anche senza privilegi amministrativi. Pensati per **Debian 12, Bash e GitHub CLI (`gh`)**, con repository HTTPS.
-
-Ogni studente usa il proprio account GitHub. Il login autorizza un **token di accesso**, non un certificato o una chiave SSH.
-
-## Installazione rapida senza sudo
+## Installazione rapida
 
 Dal terminale della macchina su cui lavorerai, come normale utente Linux:
 
