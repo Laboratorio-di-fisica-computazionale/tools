@@ -22,6 +22,28 @@ case ":$PATH:" in
     *) export PATH="$bin_dir:$PATH" ;;
 esac
 
+# 2.17.0 introduce auth token; 2.23.0 e' la soglia prudenziale gia
+# provata nel laboratorio. Non e' una garanzia futura delle API GitHub.
+gh_min_version='2.23.0'
+gh_fallback_version='2.23.0'
+
+gh_compatibile() {
+    local binario="$1" versione_output versione
+    versione_output=$("$binario" --version 2>/dev/null) || return 1
+    [[ "$versione_output" =~ ^gh\ version\ ([0-9]+\.[0-9]+\.[0-9]+)([[:space:]]|$) ]] || return 1
+    versione=${BASH_REMATCH[1]}
+    dpkg --compare-versions "$versione" ge "$gh_min_version" || return 1
+    # --help verifica comandi e opzioni senza login o richieste di rete.
+    "$binario" auth login --hostname github.com --git-protocol https --web --help >/dev/null 2>&1 || return 1
+    "$binario" auth logout --hostname github.com --help >/dev/null 2>&1 || return 1
+    "$binario" auth token --hostname github.com --help >/dev/null 2>&1 || return 1
+    "$binario" auth setup-git --hostname github.com --help >/dev/null 2>&1 || return 1
+    "$binario" config get user --host github.com --help >/dev/null 2>&1 || return 1
+    "$binario" api --hostname github.com user --jq '.login' --help >/dev/null 2>&1 || return 1
+}
+
+command -v dpkg >/dev/null || { printf 'Manca dpkg: questo script richiede Debian.\n' >&2; exit 1; }
+
 installa_gh() (
     set -e
     for programma in apt-get dpkg-deb mktemp install mv; do
@@ -47,15 +69,60 @@ installa_gh() (
         exit 1
     fi
     dpkg-deb -x gh_*.deb estratto
-    # L'estrazione non installa dipendenze: controlla il binario prima di copiarlo.
-    estratto/usr/bin/gh --version >/dev/null
+    candidato='estratto/usr/bin/gh'
+    if ! gh_compatibile "$candidato"; then
+        printf 'WARNING: il gh scaricato con APT e troppo vecchio, non eseguibile o privo dei comandi richiesti (minimo %s).\n' "$gh_min_version" >&2
+        printf 'Scarico la release ufficiale gh %s come fallback, senza sudo.\n' "$gh_fallback_version" >&2
+        for programma in curl tar sha256sum; do
+            command -v "$programma" >/dev/null || {
+                printf 'Manca %s: fallback non disponibile.\n' "$programma" >&2
+                exit 1
+            }
+        done
+        case "$(dpkg --print-architecture)" in
+            amd64) arch=amd64 ;;
+            arm64) arch=arm64 ;;
+            i386) arch=386 ;;
+            armhf) arch=armv6 ;;
+            *) printf 'Architettura Debian non supportata dal fallback.\n' >&2; exit 1 ;;
+        esac
+        nome="gh_${gh_fallback_version}_linux_${arch}"
+        archivio="$nome.tar.gz"
+        base_url="https://github.com/cli/cli/releases/download/v${gh_fallback_version}"
+        for file in "$archivio" "gh_${gh_fallback_version}_checksums.txt"; do
+            curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
+                --connect-timeout 20 --max-time 180 --output "$file" "$base_url/$file"
+        done
+        checksum=''
+        while read -r hash file extra; do
+            if [[ "$file" == "$archivio" && "$hash" =~ ^[[:xdigit:]]{64}$ && -z "$extra" ]]; then
+                checksum="$hash"
+                break
+            fi
+        done < "gh_${gh_fallback_version}_checksums.txt"
+        if [[ -z "$checksum" ]]; then
+            printf 'Checksum ufficiale assente o non valido: installazione interrotta.\n' >&2
+            exit 1
+        fi
+        printf '%s  %s\n' "$checksum" "$archivio" | sha256sum --check --status || {
+            printf 'Checksum non corrispondente: installazione interrotta.\n' >&2
+            exit 1
+        }
+        # Estrai soltanto l'eseguibile previsto, dopo aver verificato l'archivio.
+        tar -xzf "$archivio" "$nome/bin/gh"
+        candidato="$nome/bin/gh"
+        if ! gh_compatibile "$candidato"; then
+            printf 'Anche il fallback non e compatibile con questa macchina: installazione interrotta.\n' >&2
+            exit 1
+        fi
+    fi
     gh_stage=$(mktemp "$bin_dir/.gh-install.XXXXXXXX")
-    install -m 0755 estratto/usr/bin/gh "$gh_stage"
+    install -m 0755 "$candidato" "$gh_stage"
     mv -fT -- "$gh_stage" "$bin_dir/gh"
     printf 'Installato: %s/gh\n' "$bin_dir"
 )
 
-if command -v gh >/dev/null && gh --version >/dev/null 2>&1; then
+if command -v gh >/dev/null && gh_compatibile "$(command -v gh)"; then
     printf 'gh gia disponibile: %s\n' "$(command -v gh)"
 else
     installa_gh
