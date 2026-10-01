@@ -24,7 +24,7 @@ esac
 
 # 2.17.0 introduce auth token; 2.23.0 e' la soglia prudenziale gia
 # provata nel laboratorio. Non e' una garanzia futura delle API GitHub.
-gh_min_version='2.23.0'
+gh_min_version='2.2.3'
 gh_fallback_version='2.2.3'
 
 gh_verifica_comando() {
@@ -59,7 +59,8 @@ gh_compatibile() {
     gh_verifica_comando "$binario" auth token --hostname github.com --help || return 1
     gh_verifica_comando "$binario" auth setup-git --hostname github.com --help || return 1
     gh_verifica_comando "$binario" config get user --host github.com --help || return 1
-    gh_verifica_comando "$binario" api --hostname github.com user --jq '.login' --help || return 1
+    # In gh 2.23.0 l'help di api fallisce se --help non segue subito api.
+    gh_verifica_comando "$binario" api --help --hostname github.com user --jq '.login' || return 1
 }
 
 command -v dpkg >/dev/null || { printf 'Manca dpkg: questo script richiede Debian.\n' >&2; exit 1; }

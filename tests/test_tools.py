@@ -14,6 +14,12 @@ p=pathlib.Path(os.environ['LAB_TEST_STATE']); a=sys.argv[1:]
 with (p/'calls').open('a') as f: f.write('gh '+' '.join(a)+'\n')
 auth=p/'auth'
 if a==['--version']: print('gh version 2.23.0'); sys.exit(0)
+if '--help' in a:
+ # Riproduce gh 2.23.0: api richiede --help prima degli altri argomenti.
+ if a[0]=='api' and a[1]!='--help':
+  print('unknown command '+a[1], file=sys.stderr); sys.exit(1)
+ # L'help non deve richiedere credenziali o modificare il login.
+ sys.exit(0)
 if a[:3]==['config','get','user'] or a[:2]==['auth','token']:
  if auth.exists(): print('fake-value'); sys.exit(0)
  sys.exit(1)
