@@ -8,6 +8,12 @@ Dal terminale della macchina su cui lavorerai copia, incolla ed esegui questo co
 lab_installer=$(if command -v curl >/dev/null; then curl -fsSL https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh; elif command -v wget >/dev/null; then wget -qO- https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh; else printf 'Serve curl oppure wget.\n' >&2; exit 1; fi) && /bin/bash -c "$lab_installer"
 ```
 
+In alternativa, per scaricare l'installer direttamente con `wget`:
+
+```bash
+lab_installer=$(wget -qO- https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh) && /bin/bash -c "$lab_installer"
+```
+
 Questo installer:
 
 1. Crea `~/.local/bin`, se manca.

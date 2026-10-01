@@ -27,19 +27,39 @@ esac
 gh_min_version='2.23.0'
 gh_fallback_version='2.23.0'
 
+gh_verifica_comando() {
+    local output
+    if output=$("$@" 2>&1); then
+        return 0
+    fi
+    printf 'Verifica gh fallita:' >&2
+    printf ' %q' "$@" >&2
+    printf '\n%s\n' "$output" >&2
+    return 1
+}
+
 gh_compatibile() {
     local binario="$1" versione_output versione
-    versione_output=$("$binario" --version 2>/dev/null) || return 1
-    [[ "$versione_output" =~ ^gh\ version\ ([0-9]+\.[0-9]+\.[0-9]+)([[:space:]]|$) ]] || return 1
+    if ! versione_output=$("$binario" --version 2>&1); then
+        printf 'Impossibile eseguire %s --version:\n%s\n' "$binario" "$versione_output" >&2
+        return 1
+    fi
+    if [[ ! "$versione_output" =~ ^gh\ version\ ([0-9]+\.[0-9]+\.[0-9]+)([[:space:]]|$) ]]; then
+        printf 'Versione gh non riconosciuta (%s):\n%s\n' "$binario" "$versione_output" >&2
+        return 1
+    fi
     versione=${BASH_REMATCH[1]}
-    dpkg --compare-versions "$versione" ge "$gh_min_version" || return 1
+    if ! dpkg --compare-versions "$versione" ge "$gh_min_version"; then
+        printf 'Versione gh %s troppo vecchia (%s): serve almeno %s.\n' "$versione" "$binario" "$gh_min_version" >&2
+        return 1
+    fi
     # --help verifica comandi e opzioni senza login o richieste di rete.
-    "$binario" auth login --hostname github.com --git-protocol https --web --help >/dev/null 2>&1 || return 1
-    "$binario" auth logout --hostname github.com --help >/dev/null 2>&1 || return 1
-    "$binario" auth token --hostname github.com --help >/dev/null 2>&1 || return 1
-    "$binario" auth setup-git --hostname github.com --help >/dev/null 2>&1 || return 1
-    "$binario" config get user --host github.com --help >/dev/null 2>&1 || return 1
-    "$binario" api --hostname github.com user --jq '.login' --help >/dev/null 2>&1 || return 1
+    gh_verifica_comando "$binario" auth login --hostname github.com --git-protocol https --web --help || return 1
+    gh_verifica_comando "$binario" auth logout --hostname github.com --help || return 1
+    gh_verifica_comando "$binario" auth token --hostname github.com --help || return 1
+    gh_verifica_comando "$binario" auth setup-git --hostname github.com --help || return 1
+    gh_verifica_comando "$binario" config get user --host github.com --help || return 1
+    gh_verifica_comando "$binario" api --hostname github.com user --jq '.login' --help || return 1
 }
 
 command -v dpkg >/dev/null || { printf 'Manca dpkg: questo script richiede Debian.\n' >&2; exit 1; }
