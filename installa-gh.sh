@@ -73,12 +73,21 @@ installa_gh() (
     if ! gh_compatibile "$candidato"; then
         printf 'WARNING: il gh scaricato con APT e troppo vecchio, non eseguibile o privo dei comandi richiesti (minimo %s).\n' "$gh_min_version" >&2
         printf 'Scarico la release ufficiale gh %s come fallback, senza sudo.\n' "$gh_fallback_version" >&2
-        for programma in curl tar sha256sum; do
+        for programma in tar sha256sum; do
             command -v "$programma" >/dev/null || {
                 printf 'Manca %s: fallback non disponibile.\n' "$programma" >&2
                 exit 1
             }
         done
+        if command -v curl >/dev/null; then
+            downloader=(curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https'
+                --connect-timeout 20 --max-time 180 --output)
+        elif command -v wget >/dev/null; then
+            downloader=(wget --https-only --quiet --show-progress --timeout=20 --tries=1 --output-document)
+        else
+            printf 'Mancano curl e wget: fallback non disponibile.\n' >&2
+            exit 1
+        fi
         case "$(dpkg --print-architecture)" in
             amd64) arch=amd64 ;;
             arm64) arch=arm64 ;;
@@ -90,8 +99,7 @@ installa_gh() (
         archivio="$nome.tar.gz"
         base_url="https://github.com/cli/cli/releases/download/v${gh_fallback_version}"
         for file in "$archivio" "gh_${gh_fallback_version}_checksums.txt"; do
-            curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' \
-                --connect-timeout 20 --max-time 180 --output "$file" "$base_url/$file"
+            "${downloader[@]}" "$file" "$base_url/$file"
         done
         checksum=''
         while read -r hash file extra; do

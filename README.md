@@ -5,13 +5,13 @@
 Dal terminale della macchina su cui lavorerai copia, incolla ed esegui questo comando in una shell:
 
 ```bash
-lab_installer=$(curl -fsSL https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh) && /bin/bash -c "$lab_installer"
+lab_installer=$(if command -v curl >/dev/null; then curl -fsSL https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh; elif command -v wget >/dev/null; then wget -qO- https://raw.githubusercontent.com/Laboratorio-di-fisica-computazionale/tools/main/install.sh; else printf 'Serve curl oppure wget.\n' >&2; exit 1; fi) && /bin/bash -c "$lab_installer"
 ```
 
 Questo installer:
 
 1. Crea `~/.local/bin`, se manca.
-2. Scarica `installa-gh.sh`, `github-inizio.sh` e `github-fine.sh` con `curl`.
+2. Scarica `installa-gh.sh`, `github-inizio.sh` e `github-fine.sh` con `curl`, oppure con `wget` se `curl` non è disponibile. La stessa scelta vale per il download della release ufficiale di `gh`, quando necessario.
 3. Verifica tutti i download e la sintassi Bash prima di installare i tre file con permessi `755`.
 4. Esegue `installa-gh.sh`, che controlla se `gh` e' installato, altrimenti scarica il pacchetto Debian e ne copia l'eseguibile in `~/.local/bin/gh`.
 5. Configura `~/.bashrc` per includere `~/.local/bin` nel `PATH`, se non è già presente in una comune assegnazione di `PATH`.
