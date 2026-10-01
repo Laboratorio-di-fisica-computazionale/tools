@@ -25,7 +25,7 @@ esac
 # 2.17.0 introduce auth token; 2.23.0 e' la soglia prudenziale gia
 # provata nel laboratorio. Non e' una garanzia futura delle API GitHub.
 gh_min_version='2.23.0'
-gh_fallback_version='2.23.0'
+gh_fallback_version='2.2.3'
 
 gh_verifica_comando() {
     local output
